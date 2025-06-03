@@ -2,7 +2,9 @@ package b2Ops
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -11,7 +13,7 @@ import (
 )
 
 // CleanObjects finds and deletes (or dry-runs) files older than the given age string.
-func (c *Client) CleanObjects(bucketName, prefix, ageStr string, dryRun bool, recurse bool) error {
+func (c *Client) CleanObjects(bucketName, prefix, ageStr string, dryRun bool, recurse bool, outputPath string) error {
 	// Parse the age string (e.g., "30d", "2m", "1y")
 	age, err := util.ParseAgeString(ageStr)
 	if err != nil {
@@ -71,14 +73,53 @@ func (c *Client) CleanObjects(bucketName, prefix, ageStr string, dryRun bool, re
 		return nil
 	}
 
-	// Actually delete files
+	var deletedEntries []FileEntry
+
+	// Actually delete files and print each deleted object
 	for _, entry := range toDelete {
 		obj := bucket.Object(entry.Name)
 		if err := obj.Delete(ctx); err != nil {
 			fmt.Printf("Failed to delete %s: %v\n", entry.Name, err)
 		} else {
 			fmt.Printf("Deleted %s\n", entry.Name)
+			deletedEntries = append(deletedEntries, entry)
 		}
 	}
+
+	// Write deleted entries to CSV if requested
+	if outputPath != "" && len(deletedEntries) > 0 {
+		outputPath = util.SanitizeFileName(outputPath, ".csv")
+
+		file, err := os.Create(outputPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create output file: %v\n", err)
+			return err
+		}
+		defer file.Close()
+
+		writer := csv.NewWriter(file)
+		defer writer.Flush()
+
+		// Write header
+		if err := writer.Write([]string{"Name", "Size", "Created"}); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to write CSV header: %v\n", err)
+			return err
+		}
+
+		// Write each deleted entry
+		for _, entry := range deletedEntries {
+			record := []string{
+				entry.Name,
+				fmt.Sprintf("%d", entry.Size),
+				entry.UploadTimestamp.Format("2006-01-02 15:04:05"),
+			}
+			if err := writer.Write(record); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to write CSV record: %v\n", err)
+				return err
+			}
+		}
+		fmt.Printf("Deleted objects written to %s\n", outputPath)
+	}
+
 	return nil
 }
