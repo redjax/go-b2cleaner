@@ -20,6 +20,8 @@ type Config struct {
 	Bucket  string
 	Path    string
 	Recurse bool
+	SortBy  string
+	Order   string
 }
 
 var k = koanf.New(".")
@@ -52,5 +54,7 @@ func LoadConfig(cmd *cobra.Command) Config {
 		Bucket:  k.String("bucket"),
 		Path:    k.String("path"),
 		Recurse: k.Bool("recurse"),
+		SortBy:  k.String("sort"),
+		Order:   k.String("order"),
 	}
 }
