@@ -4,6 +4,8 @@ config.toml
 *.env*
 *.csv
 
+dist/
+
 !*example*.*
 !*.*example*
 !*.*example*.*
