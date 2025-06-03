@@ -1,7 +1,7 @@
 package b2Ops
 
 import (
-	"fmt"
+	// "fmt"
 	"os"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -56,7 +56,7 @@ func RenderFileEntriesTable(entries []FileEntry, maxNameLen int, termWidth int) 
 	t.AppendFooter(table.Row{"", "Total Size", util.HumanDiskSize(totalSize), ""})
 
 	// Optionally print detected width to stderr for debugging
-	fmt.Fprintf(os.Stderr, "Detected terminal width: %d\n", termWidth)
+	// fmt.Fprintf(os.Stderr, "Detected terminal width: %d\n", termWidth)
 
 	t.Render()
 }

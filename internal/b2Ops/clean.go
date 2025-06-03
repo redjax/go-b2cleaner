@@ -43,6 +43,15 @@ func (c *Client) CleanObjects(bucketName, prefix, ageStr string, dryRun bool, re
 		}
 	}
 
+	if ageStr == "" && len(filetypes) == 0 {
+		fmt.Printf("Cleaning bucket %s at path %s\n", bucketName, prefix)
+	} else if ageStr != "" || len(filetypes) == 0 {
+		fmt.Printf("Cleaning bucket %s at path %s older than %s\n", bucketName, prefix, ageStr)
+	} else {
+		fmt.Printf("Cleaning bucket %s at path %s with filetypes %v\n", bucketName, prefix, normalizedTypes)
+	}
+
+	// DELETE loop
 	for it.Next() {
 		obj := it.Object()
 		attrs, err := obj.Attrs(ctx)
