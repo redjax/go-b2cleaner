@@ -1,0 +1,8 @@
+config.toml
+*.local.toml
+*.env
+*.env*
+
+!*example*.*
+!*.*example*
+!*.*example*.*

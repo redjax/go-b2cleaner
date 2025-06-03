@@ -1,0 +1,5 @@
+key_id = "your-b2-key-id"
+app_key = "your-b2-app-key"
+bucket = "bucket-name"
+path = "path/in/bucket"
+recurse = false
