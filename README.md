@@ -55,4 +55,11 @@ recurse = true
 
 Run `b2cleaner --help` to see all options. To see options for a subcommand, run `b2cleaner <command> --help`.
 
+Basic operations:
+
+| Command                                                                                                                                                      | Description                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list --bucket <bucket> --path <path/in/bucket> [-c path/to/config.toml] [--sort [name, size]] [--order [asc,desc]]`                                         | List files in a bucket                                                                                                                                            |
+| `clean --bucket <bucket> --path <path/in/bucket> [-c path/to/config.toml] [--filetype="fileExt"]+ [-o/--output path/to/results.csv] [--recurse] [--dry-run]` | Clean/delete files in a given bucket/path. Add `--dry-run` to show what will be deleted before deleting. Add `-o/--output` to save deleted objects to a CSV file. |
+
 ## Links
