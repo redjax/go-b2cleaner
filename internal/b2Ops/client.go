@@ -3,6 +3,7 @@ package b2Ops
 import (
 	"context"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -10,6 +11,13 @@ import (
 	"github.com/kurin/blazer/b2"
 	"github.com/redjax/go-b2cleaner/internal/config"
 	"github.com/redjax/go-b2cleaner/internal/util"
+
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/v6/text"
+
+	// terminal "github.com/wayneashleyberry/terminal-dimensions"
+	"github.com/mattn/go-isatty"
+	"golang.org/x/term"
 )
 
 type Client struct {
@@ -129,15 +137,124 @@ func (c *Client) ListObjects(bucketName, prefix string, recurse bool) error {
 		}
 	}
 
-	// Print entries
-	for _, e := range entries {
-		created := e.UploadTimestamp.Format("2006-01-02 15:04:05")
-		if e.IsDir {
-			fmt.Printf("[DIR]  %-40s %s\n", e.Name, created)
-		} else {
-			fmt.Printf("[FILE] |%s| (%10s) %-40s\n", created, util.HumanDiskSize(e.Size), e.Name)
+	// Print entries (unstyled)
+	// for _, e := range entries {
+	// 	created := e.UploadTimestamp.Format("2006-01-02 15:04:05")
+	// 	if e.IsDir {
+	// 		fmt.Printf("[DIR]  %-40s %s\n", e.Name, created)
+	// 	} else {
+	// 		fmt.Printf("[FILE] |%s| (%10s) %-40s\n", created, util.HumanDiskSize(e.Size), e.Name)
+	// 	}
+	// }
+
+	// Print entries using go-pretty table
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	// t.SetStyle(table.StyleLight)
+	t.SetStyle(table.StyleRounded)
+	t.Style().Format.Header = text.FormatTitle
+
+	// Dynamically set terminal width
+	// var width int
+	// fd := os.Stdout.Fd()
+	// if isatty.IsTerminal(fd) {
+	// 	w, _, err := term.GetSize(int(fd))
+	// 	if err == nil && w >= 80 {
+	// 		width = w
+	// 	}
+	// }
+	// if width == 0 {
+	// 	// Fallback size
+	// 	width = 120
+	// }
+
+	var width int
+	fd := os.Stdout.Fd()
+	if isatty.IsTerminal(fd) {
+		w, _, err := term.GetSize(int(fd))
+		if err == nil && w >= 80 {
+			width = w
 		}
 	}
+	if width == 0 {
+		width = 160 // fallback to a larger value
+	}
+
+	// Use more of the width for the name column
+	maxNameLen := int(width) - 38 // 38 is a rough estimate for other columns and borders
+	if maxNameLen < 10 {
+		maxNameLen = 10
+	}
+	fmt.Fprintf(os.Stderr, "Detected terminal width: %d\n", width)
+
+	// Debug print detected width
+	// fmt.Fprintf(os.Stderr, "Detected terminal width: %d\n", width)
+
+	// " FILE "
+	typeCol := 6
+	// " 10.37GB "
+	sizeCol := 10
+	// "2023-05-22 03:08"
+	createdCol := 18
+	// Table borders and padding
+	borders := 9
+	maxNameLen = int(width) - (typeCol + sizeCol + createdCol + borders)
+	if maxNameLen < 10 {
+		// Always leave at least some space
+		maxNameLen = 10
+	}
+
+	// Configure columns
+	t.AppendHeader(table.Row{"Type", "Name", "Size", "Created"})
+	t.SetColumnConfigs([]table.ColumnConfig{
+		{Number: 1, Align: text.AlignCenter}, // Type
+		{
+			Number: 2, Align: text.AlignLeft,
+			WidthMax:         maxNameLen,
+			WidthMaxEnforcer: text.WrapSoft,
+			Transformer: func(val interface{}) string {
+				s, _ := val.(string)
+				// If the name is extremely long, truncate after 2*maxNameLen
+				if len(s) > maxNameLen*2 {
+					return s[:maxNameLen*2-3] + "..."
+				}
+				return s
+			},
+		},
+		{Number: 3, Align: text.AlignRight}, // Size
+		{Number: 4, Align: text.AlignLeft},  // Created
+	})
+
+	for _, e := range entries {
+		var size string
+		if !e.IsDir {
+			size = util.HumanDiskSize(e.Size)
+		}
+
+		t.AppendRow(table.Row{
+			map[bool]string{true: "DIR", false: "FILE"}[e.IsDir],
+			e.Name,
+			size,
+			e.UploadTimestamp.Format("2006-01-02 15:04"),
+		})
+	}
+
+	fileCount := 0
+	totalSize := int64(0)
+	for _, e := range entries {
+		if !e.IsDir {
+			fileCount++
+			totalSize += e.Size // sum raw bytes, not the formatted string
+		}
+	}
+
+	// Add footer with total count
+	// t.AppendFooter(table.Row{"", "Total Files", len(entries), ""})
+	t.AppendFooter(table.Row{"", "Total File Count", fileCount, ""})
+	t.AppendFooter(table.Row{"", "Total Size", util.HumanDiskSize(totalSize), ""})
+
+	// Render the table
+	t.Render()
 
 	return nil
 }
