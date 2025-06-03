@@ -9,6 +9,7 @@ A Backblaze B2 storage cleaning utility written in Go.
     - [CLI args](#cli-args)
     - [Environment variables](#environment-variables)
     - [Configuration file](#configuration-file)
+- [Usage](#usage)
 - [Links](#links)
 
 ## Setup
@@ -49,5 +50,9 @@ bucket  = "your-bucket"
 path    = "your/path/"
 recurse = true
 ```
+
+## Usage
+
+Run `b2cleaner --help` to see all options. To see options for a subcommand, run `b2cleaner <command> --help`.
 
 ## Links
