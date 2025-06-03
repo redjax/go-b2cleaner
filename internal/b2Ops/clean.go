@@ -13,7 +13,7 @@ import (
 )
 
 // CleanObjects finds and deletes (or dry-runs) files older than the given age string.
-func (c *Client) CleanObjects(bucketName, prefix, ageStr string, dryRun bool, recurse bool, outputPath string) error {
+func (c *Client) CleanObjects(bucketName, prefix, ageStr string, dryRun bool, recurse bool, outputPath string, filetypes []string) error {
 	// Parse the age string (e.g., "30d", "2m", "1y")
 	age, err := util.ParseAgeString(ageStr)
 	if err != nil {
@@ -30,6 +30,18 @@ func (c *Client) CleanObjects(bucketName, prefix, ageStr string, dryRun bool, re
 	it := bucket.List(ctx, b2.ListPrefix(prefix))
 
 	var toDelete []FileEntry
+
+	var normalizedTypes []string
+	for _, ft := range filetypes {
+		if ft == "" {
+			continue
+		}
+		if !strings.HasPrefix(ft, ".") {
+			normalizedTypes = append(normalizedTypes, "."+ft)
+		} else {
+			normalizedTypes = append(normalizedTypes, ft)
+		}
+	}
 
 	for it.Next() {
 		obj := it.Object()
@@ -52,6 +64,20 @@ func (c *Client) CleanObjects(bucketName, prefix, ageStr string, dryRun bool, re
 
 		// Only consider files (not directories) older than cutoff
 		if attrs.UploadTimestamp.Before(cutoff) && !strings.HasSuffix(obj.Name(), "/") {
+			// Filter by filetype
+			if len(normalizedTypes) > 0 {
+				matched := false
+				for _, ext := range normalizedTypes {
+					if strings.HasSuffix(obj.Name(), ext) {
+						matched = true
+						break
+					}
+				}
+				if !matched {
+					continue // skip files not matching any extension
+				}
+			}
+
 			toDelete = append(toDelete, FileEntry{
 				Name:            obj.Name(),
 				Size:            attrs.Size,

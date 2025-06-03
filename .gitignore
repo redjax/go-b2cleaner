@@ -2,6 +2,7 @@ config.toml
 *.local.toml
 *.env
 *.env*
+*.csv
 
 !*example*.*
 !*.*example*

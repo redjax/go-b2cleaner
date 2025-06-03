@@ -2,6 +2,7 @@ package clean
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/redjax/go-b2cleaner/internal/b2Ops"
 	"github.com/redjax/go-b2cleaner/internal/config"
@@ -15,7 +16,23 @@ var (
 	path       string
 	recurse    bool
 	outputPath string
+	filetypes  filetypesFlag
 )
+
+type filetypesFlag []string
+
+func (f *filetypesFlag) String() string {
+	return strings.Join(*f, ",")
+}
+
+func (f *filetypesFlag) Set(value string) error {
+	*f = append(*f, value)
+	return nil
+}
+
+func (f *filetypesFlag) Type() string {
+	return "filetypes"
+}
 
 var CleanCmd = &cobra.Command{
 	Use:   "clean",
@@ -36,7 +53,7 @@ var CleanCmd = &cobra.Command{
 		}
 
 		client := b2Ops.NewClient(cfg)
-		return client.CleanObjects(bucket, path, ageStr, dryRun, recurse, outputPath)
+		return client.CleanObjects(bucket, path, ageStr, dryRun, recurse, outputPath, filetypes)
 	},
 }
 
@@ -47,4 +64,6 @@ func init() {
 	CleanCmd.Flags().StringVar(&path, "path", "", "Path to clean (overrides config)")
 	CleanCmd.Flags().BoolVar(&recurse, "recurse", false, "Recurse into subdirectories")
 	CleanCmd.Flags().StringVarP(&outputPath, "output", "o", "", "Write deleted objects to CSV file")
+	CleanCmd.Flags().Var(&filetypes, "filetype", "Only delete files with these extensions (can be specified multiple times, e.g. --filetype=backup --filetype=.jpg)")
+
 }
