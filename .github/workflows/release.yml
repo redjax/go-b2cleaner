@@ -1,12 +1,12 @@
----
 name: Release
 
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: "Release version (e.g. v0.1.0)"
+      releaseType:
+        description: "Release type (patch, minor, major)"
         required: true
+        default: "patch"
         type: string
   push:
     tags:
@@ -30,14 +30,27 @@ jobs:
           incrementPerCommit: false
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Show next version
+        run: echo "Next version is ${{ steps.versioning.outputs.version }}"
+
       - name: Create tag and push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ github.event.inputs.version }}
-          git push origin ${{ github.event.inputs.version }}
+          git tag ${{ steps.versioning.outputs.version }}
+          git push origin ${{ steps.versioning.outputs.version }}
+
+      ## Save version for downstream jobs
+      - name: Save version to file
+        run: echo "${{ steps.versioning.outputs.version }}" > version.txt
+
+      - name: Upload version artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: version
+          path: version.txt
 
   ## Build binaries
   build:
@@ -48,8 +61,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ## Needed to fetch tags
           fetch-depth: 0
+
+      - name: Download version artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: version
+
+      - name: Read version
+        id: version
+        run: echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
 
       - name: Fetch tags
         run: git fetch --tags
@@ -82,7 +103,7 @@ jobs:
 
             go build -o dist/$BIN_NAME ./cmd/b2cleaner
 
-            ZIP_NAME="b2cleaner-${{ github.event.inputs.version }}-${OS_NAME}-${GOARCH}.zip"
+            ZIP_NAME="b2cleaner-${VERSION}-${OS_NAME}-${GOARCH}.zip"
             zip -j dist/$ZIP_NAME dist/$BIN_NAME
             rm dist/$BIN_NAME
           done
@@ -105,12 +126,21 @@ jobs:
           name: dist
           path: dist
 
+      - name: Download version artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: version
+
+      - name: Read version
+        id: version
+        run: echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
+
       - name: Create Github release
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.version }}
-          name: ${{ github.event.inputs.version }}
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
           draft: false
           prerelease: false
           generate_release_notes: true
