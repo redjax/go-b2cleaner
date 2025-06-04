@@ -121,6 +121,15 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code at tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.VERSION }} # or ${{ steps.versioning.outputs.version }} if you pass it as an output/env
+
+      - name: Fetch all tags
+        run: git fetch --tags
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
