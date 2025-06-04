@@ -151,6 +151,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -169,7 +174,6 @@ jobs:
       - name: List dist directory
         run: ls -lh dist/
 
-      ## Create the GitHub release (if not already created)
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
@@ -181,10 +185,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      ## Upload all zip files as release assets using the GitHub CLI
       - name: Upload binaries as release assets
         run: |
           for file in dist/*.zip; do
+            echo "Uploading $file"
             gh release upload "${VERSION}" "$file" --clobber
           done
         env:
