@@ -101,7 +101,8 @@ jobs:
               BIN_NAME="b2cleaner.exe"
             fi
 
-            go build -o dist/$BIN_NAME ./cmd/b2cleaner
+            ## Build app
+            go build -o dist/$BIN_NAME .
 
             ZIP_NAME="b2cleaner-${VERSION}-${OS_NAME}-${GOARCH}.zip"
             zip -j dist/$ZIP_NAME dist/$BIN_NAME
