@@ -1,4 +1,4 @@
-name: Release
+name: Automated Go Release
 
 on:
   workflow_dispatch:
@@ -11,6 +11,15 @@ on:
   push:
     tags:
       - "v*"
+
+env:
+  ## If you copied this pipeline, change this for the current repo's bin name
+  BIN_NAME: b2cleaner
+  # If your main package is not at repo root, change this path (e.g. ./cmd/binName)
+  MAIN_PACKAGE_PATH: .
+
+permissions:
+  contents: write
 
 jobs:
   ## Create release tag
@@ -33,6 +42,7 @@ jobs:
       - name: Show next version
         run: echo "Next version is ${{ steps.versioning.outputs.version }}"
 
+      ## Create tag and push
       - name: Create tag and push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -41,6 +51,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag ${{ steps.versioning.outputs.version }}
           git push origin ${{ steps.versioning.outputs.version }}
+          # Give GitHub a moment to register the tag
+          sleep 5
 
       ## Save version for downstream jobs
       - name: Save version to file
@@ -96,18 +108,21 @@ jobs:
             OS_NAME=$GOOS
             if [ "$GOOS" = "darwin" ]; then OS_NAME="macOS"; fi
 
-            BIN_NAME="b2cleaner"
+            BIN_FILE="${BIN_NAME}"
             if [ "$GOOS" = "windows" ]; then
-              BIN_NAME="b2cleaner.exe"
+              BIN_FILE="${BIN_NAME}.exe"
             fi
 
-            ## Build app
-            go build -o dist/$BIN_NAME .
+            # Build the binary for the target platform
+            go build -o dist/$BIN_FILE $MAIN_PACKAGE_PATH
 
-            ZIP_NAME="b2cleaner-${VERSION}-${OS_NAME}-${GOARCH}.zip"
-            zip -j dist/$ZIP_NAME dist/$BIN_NAME
-            rm dist/$BIN_NAME
+            ZIP_NAME="${BIN_NAME}-${VERSION}-${OS_NAME}-${GOARCH}.zip"
+            zip -j dist/$ZIP_NAME dist/$BIN_FILE
+            rm dist/$BIN_FILE
           done
+
+      - name: List built files
+        run: ls -lh dist/
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -121,15 +136,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code at tag
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ env.VERSION }} # or ${{ steps.versioning.outputs.version }} if you pass it as an output/env
-
-      - name: Fetch all tags
-        run: git fetch --tags
-
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -144,6 +150,18 @@ jobs:
       - name: Read version
         id: version
         run: echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
+
+      ## Ensure the tag exists locally before creating the release
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Checkout tag
+        run: git checkout ${{ env.VERSION }}
 
       - name: Create Github release
         id: create_release
