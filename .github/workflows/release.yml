@@ -13,12 +13,22 @@ on:
       - "v*"
 
 jobs:
+  ## Create release tag
   tag:
     name: Create Git Tag
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      ## Auto-increment version based on existing tags and releaseType input
+      - name: Auto Increment Semver Action
+        id: versioning
+        uses: MCKanpolat/auto-semver-action@v2
+        with:
+          releaseType: ${{ inputs.releaseType }}
+          incrementPerCommit: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create tag and push
         env:
@@ -29,6 +39,7 @@ jobs:
           git tag ${{ github.event.inputs.version }}
           git push origin ${{ github.event.inputs.version }}
 
+  ## Build binaries
   build:
     name: Build Binaries
     runs-on: ubuntu-latest
@@ -82,6 +93,7 @@ jobs:
           name: dist
           path: dist/*.zip
 
+  ## Create Github release
   release:
     name: Create Release
     needs: build
