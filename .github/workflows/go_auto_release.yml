@@ -113,12 +113,17 @@ jobs:
               BIN_FILE="${BIN_NAME}.exe"
             fi
 
-            # Build the binary for the target platform
+            ## Build the binary for the target platform
             go build -o dist/$BIN_FILE $MAIN_PACKAGE_PATH
 
-            ZIP_NAME="${BIN_NAME}-${VERSION}-${OS_NAME}-${GOARCH}.zip"
-            zip -j dist/$ZIP_NAME dist/$BIN_FILE
-            rm dist/$BIN_FILE
+            ## Name the zip as <os>-<arch>-<version>.zip (e.g., darwin-arm64-v0.0.1.zip)
+            ZIP_NAME="${OS_NAME}-${GOARCH}-${VERSION}.zip"
+
+            ## Create a zip containing only the binary at the root
+            (cd dist && zip -j "$ZIP_NAME" "$BIN_FILE")
+
+            ## Remove the binary after zipping
+            rm "dist/$BIN_FILE"
           done
 
       - name: List built files
