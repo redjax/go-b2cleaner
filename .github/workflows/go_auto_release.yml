@@ -163,8 +163,7 @@ jobs:
       - name: Checkout tag
         run: git checkout ${{ env.VERSION }}
 
-      - name: Create Github release
-        id: create_release
+      - name: Create Github release and upload assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.VERSION }}
@@ -172,12 +171,6 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v2
-        with:
           files: dist/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
