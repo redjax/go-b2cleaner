@@ -115,14 +115,20 @@ jobs:
 
             ## Build the binary for the target platform
             go build -o dist/$BIN_FILE $MAIN_PACKAGE_PATH
+            if [ $? -ne 0 ]; then
+              echo "Build failed for $platform"
+              exit 1
+            fi
 
-            ## Name the zip as <os>-<arch>-<version>.zip (e.g., darwin-arm64-v0.0.1.zip)
             ZIP_NAME="${OS_NAME}-${GOARCH}-${VERSION}.zip"
 
-            ## Create a zip containing only the binary at the root
-            (cd dist && zip -j "$ZIP_NAME" "$BIN_FILE")
+            ## Create the zip in dist/ containing only the binary at the root
+            (cd dist && zip "$ZIP_NAME" "$BIN_FILE")
+            if [ $? -ne 0 ]; then
+              echo "Zip failed for $platform"
+              exit 1
+            fi
 
-            ## Remove the binary after zipping
             rm "dist/$BIN_FILE"
           done
 
@@ -146,6 +152,10 @@ jobs:
         with:
           name: dist
           path: dist
+
+      ## Uncomment to debug print files in dist/ dir
+      - name: List dist directory
+        run: ls -lh dist/
 
       - name: Download version artifact
         uses: actions/download-artifact@v4
