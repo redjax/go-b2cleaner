@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       ## Auto-increment version based on existing tags and releaseType input
       - name: Auto Increment Semver Action
