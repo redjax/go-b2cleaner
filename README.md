@@ -1,6 +1,6 @@
 # B2Cleaner <!-- omit in toc -->
 
-A Backblaze B2 storage cleaning utility written in Go.
+A Backblaze B2 storage cleaning utility written in Go. Check the [releases](https://github.com/redjax/go-b2cleaner/releases) for downloads.
 
 ## Table of Contents <!-- omit in toc -->
 
