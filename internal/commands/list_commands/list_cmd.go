@@ -1,10 +1,10 @@
-package list
+package list_commands
 
 import (
 	"fmt"
 
-	"github.com/redjax/go-b2cleaner/internal/b2Ops"
 	"github.com/redjax/go-b2cleaner/internal/config"
+	"github.com/redjax/go-b2cleaner/internal/services/b2Ops"
 	"github.com/spf13/cobra"
 )
 
