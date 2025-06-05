@@ -1,4 +1,4 @@
-package list
+package list_commands
 
 import (
 	"fmt"

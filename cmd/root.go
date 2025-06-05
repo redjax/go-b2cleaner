@@ -3,8 +3,8 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/redjax/go-b2cleaner/cmd/clean"
-	"github.com/redjax/go-b2cleaner/cmd/list"
+	"github.com/redjax/go-b2cleaner/internal/commands/clean_commands"
+	"github.com/redjax/go-b2cleaner/internal/commands/list_commands"
 )
 
 var (
@@ -25,8 +25,8 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(list.ListCmd)
-	rootCmd.AddCommand(clean.CleanCmd)
+	rootCmd.AddCommand(list_commands.ListCmd)
+	rootCmd.AddCommand(clean_commands.CleanCmd)
 
 	rootCmd.PersistentFlags().StringVar(&appKey, "app-key", "", "B2 application key")
 	rootCmd.PersistentFlags().StringVar(&keyID, "key-id", "", "B2 key ID")

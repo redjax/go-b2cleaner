@@ -1,4 +1,4 @@
-package clean
+package clean_commands
 
 import (
 	"fmt"
