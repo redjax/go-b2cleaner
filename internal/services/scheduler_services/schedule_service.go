@@ -3,13 +3,20 @@ package scheduler_services
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
 )
 
-func ScheduleCommandJob(cronExpr, logFile string, rootCmd *cobra.Command, commandLine []string) error {
+func ScheduleCommandJob(
+	cronExpr string,
+	logFile string,
+	rootCmd *cobra.Command,
+	commandLine []string,
+	persistentFlags []string,
+) error {
 	if cronExpr == "" {
 		return ErrMissingCronExpr
 	}
@@ -23,20 +30,12 @@ func ScheduleCommandJob(cronExpr, logFile string, rootCmd *cobra.Command, comman
 
 	_, err = c.AddFunc(cronExpr, func() {
 		start := time.Now()
-		logger.Printf("Starting scheduled job: %v at %s", commandLine, start.Format(time.RFC3339))
+		fullArgs := append(persistentFlags, commandLine...)
+		logger.Printf("Starting scheduled job: %v at %s", strings.Join(fullArgs, " "), start.Format(time.RFC3339))
 
-		// Clone the root command to avoid flag state issues
-		cmd := &cobra.Command{
-			Use:   rootCmd.Use,
-			Short: rootCmd.Short,
-			Run:   rootCmd.Run,
-		}
-		// Add all subcommands
-		for _, sub := range rootCmd.Commands() {
-			cmd.AddCommand(sub)
-		}
-		cmd.SetArgs(commandLine)
-		if err := cmd.Execute(); err != nil {
+		// SetArgs on the actual rootCmd, then Execute
+		rootCmd.SetArgs(fullArgs)
+		if err := rootCmd.Execute(); err != nil {
 			logger.Printf("Job failed: %v", err)
 		} else {
 			logger.Printf("Completed in %s", time.Since(start))
