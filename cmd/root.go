@@ -5,6 +5,7 @@ import (
 
 	"github.com/redjax/go-b2cleaner/internal/commands/clean_commands"
 	"github.com/redjax/go-b2cleaner/internal/commands/list_commands"
+	"github.com/redjax/go-b2cleaner/internal/commands/schedule_commands"
 )
 
 var (
@@ -27,6 +28,7 @@ func Execute() {
 func init() {
 	rootCmd.AddCommand(list_commands.ListCmd)
 	rootCmd.AddCommand(clean_commands.CleanCmd)
+	rootCmd.AddCommand(schedule_commands.NewScheduleCommand(rootCmd))
 
 	rootCmd.PersistentFlags().StringVar(&appKey, "app-key", "", "B2 application key")
 	rootCmd.PersistentFlags().StringVar(&keyID, "key-id", "", "B2 key ID")
