@@ -63,3 +63,6 @@ Basic operations:
 | `clean --bucket <bucket> --path <path/in/bucket> [-c path/to/config.toml] [--filetype="fileExt"]+ [-o/--output path/to/results.csv] [--recurse] [--dry-run]` | Clean/delete files in a given bucket/path. Add `--dry-run` to show what will be deleted before deleting. Add `-o/--output` to save deleted objects to a CSV file. |
 
 ## Links
+
+- [Go cron package docs](https://pkg.go.dev/github.com/robfig/cron)
+  - [Cron schedule: allowed characters](https://pkg.go.dev/github.com/robfig/cron#hdr-CRON_Expression_Format)
