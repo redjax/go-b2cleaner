@@ -3,6 +3,8 @@ config.toml
 *.env
 *.env*
 *.csv
+*.log
+*.json
 
 dist/
 
